@@ -38,6 +38,9 @@ class ramanSpectra:
                     spec[i] = spec[i-1]
             spectra.append(spec)
         return spectra
+
+    def imshow(self):
+        pass
 # %%
 if __name__ == "__main__":
     experiment = 'esamInit'

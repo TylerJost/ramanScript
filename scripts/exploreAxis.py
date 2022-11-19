@@ -15,6 +15,7 @@ for i, scan in enumerate(scans):
     if len(scan.spectra[0]) != len(axisInfo):
         scans.pop(i)
     # For now also remove non-square images 
+    # TODO: fix this
     if int(np.sqrt(len(scan.spectra))) != np.sqrt(len(scan.spectra)):
         scans.pop(i)
 # %% Plot image
@@ -25,6 +26,8 @@ for i in range(100):
     plt.show()
 # %%
 intensities = []
+scan = scans[4]
 for spectra in scan.spectra:
     intensities.append(sum(spectra[480:600]))
-plt.imshow(np.array(intensities).reshape((100,100)), cmap='gray')
+resize = int(np.sqrt(len(scan.spectra)))
+plt.imshow(np.array(intensities).reshape((resize,resize)), cmap='gray')
