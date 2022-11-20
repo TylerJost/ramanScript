@@ -4,6 +4,8 @@ import numpy as np
 import os
 import sys
 
+from skimage import exposure
+
 from tqdm import tqdm
 # %%
 class ramanSpectra:
@@ -17,9 +19,18 @@ class ramanSpectra:
         self.file = fSplit[-1]
         self.ramanParams = fSplit[-2]
         self.phenotype = fSplit[-3]
-        self.spectra = self.getData()
+        spectra, self.spectra = self.getData()
 
     def getData(self):
+        """
+        Read text file
+
+        Input:
+        Relative file path
+
+        Output:
+        Interpolated spectra as list
+        """
         # Read text file
         with open(self.fileName) as f:
             spectraRaw = f.read()
@@ -28,20 +39,74 @@ class ramanSpectra:
         spectraRaw = [spec.split('\t') for spec in spectraRaw]
 
         # Sometimes there is a blank line
-        # To avoid this, set value to last value
-        spectra = []
-        for spec in spectraRaw[1:]:
+        # To avoid this, we interpolate the value
+        spectra, spectraInterp = [], []
+        for spec in tqdm(spectraRaw[1:], desc=self.fileName):
+            specFloat = []
             for i, val in enumerate(spec):
                 if val != '':
-                    spec[i] = float(val)
+                    specFloat.append(float(val))
                 else:
-                    spec[i] = spec[i-1]
-            spectra.append(spec)
-        return spectra
+                    if i>0:
+                        specFloat.append((specFloat[i-1]))
+                    else:
+                        specFloat.append(np.NaN)
+            specFloat = np.array(specFloat)
+            # Interpolate values
+            nans, idxFun = self.nan_helper(specFloat)
+            specFloatInterp = np.interp(idxFun(nans), idxFun(~nans), specFloat[~nans])
 
-    def imshow(self):
-        pass
-# %%
+            spectra.append(specFloat)
+            spectraInterp.append(specFloat)
+        spectra = np.array(spectra)
+        spectraInterp = np.array(spectraInterp)
+        return spectra, spectraInterp
+
+    def makeImage(self):
+        """
+        Input: array of spectra
+        Output: Square image of summed intensities in the 2800-3000 wavenumber area
+        """
+        isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
+        itensity = 'NaN'
+        if not isSquare(self.spectra):
+            raise ValueError('Scan is not a square')
+        
+        intensities = []
+
+        for spectra in self.spectra:
+            intensities.append(sum(spectra[480:600]))
+        resize = int(np.sqrt(len(self.spectra)))
+
+        intensityRaw = np.array(intensities).reshape((resize,resize))
+        
+        # Filter image (optimal so far)
+        # Because the data is self contained I won't include the raw image
+        p2, p98 = np.percentile(intensityRaw, (2, 98))
+        intensityScaled = exposure.rescale_intensity(intensityRaw, in_range=(p2, p98))
+
+        return intensityScaled
+
+    def nan_helper(self, y):
+        """Helper to handle indices and logical indices of NaNs.
+
+        Input:
+            - y, 1d numpy array with possible NaNs
+        Output:
+            - nans, logical indices of NaNs
+            - index, a function, with signature indices= index(logical_indices),
+            to convert logical indices of NaNs to 'equivalent' indices
+        Example:
+            >>> # linear interpolation of NaNs
+            >>> nans, x= nan_helper(y)
+            >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+
+        Source: https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
+        """
+
+        return np.isnan(y), lambda z: z.nonzero()[0]
+
+## %%
 if __name__ == "__main__":
     experiment = 'esamInit'
     spectras = []
@@ -51,7 +116,6 @@ if __name__ == "__main__":
                 if scan.endswith('.txt'):
                     fileName = os.path.join(root, scan)
                     spectras.append(ramanSpectra(fileName))
-
     print('Saving spectra')
     np.save(f'../data/{experiment}.npy', spectras)
 # %%
