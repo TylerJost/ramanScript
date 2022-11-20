@@ -19,7 +19,7 @@ class ramanSpectra:
         self.file = fSplit[-1]
         self.ramanParams = fSplit[-2]
         self.phenotype = fSplit[-3]
-        spectra, self.spectra = self.getData()
+        self.spectraRaw, self.spectra = self.getData()
 
     def getData(self):
         """
@@ -52,12 +52,15 @@ class ramanSpectra:
                     else:
                         specFloat.append(np.NaN)
             specFloat = np.array(specFloat)
+            specFloatInterp = specFloat.copy()
             # Interpolate values
             nans, idxFun = self.nan_helper(specFloat)
-            specFloatInterp = np.interp(idxFun(nans), idxFun(~nans), specFloat[~nans])
+            specFloatInterp[nans] = np.interp(idxFun(nans), idxFun(~nans), specFloat[~nans])
+            # Normalize by max
+            specFloatNorm = specFloatInterp/np.max(specFloatInterp)
 
-            spectra.append(specFloat)
-            spectraInterp.append(specFloat)
+            spectra.append(specFloatInterp)
+            spectraInterp.append(specFloatNorm)
         spectra = np.array(spectra)
         spectraInterp = np.array(spectraInterp)
         return spectra, spectraInterp
@@ -74,8 +77,8 @@ class ramanSpectra:
         
         intensities = []
 
-        for spectra in self.spectra:
-            intensities.append(sum(spectra[480:600]))
+        for spectra in self.spectraRaw:
+            intensities.append(sum(spectra[57:115]))
         resize = int(np.sqrt(len(self.spectra)))
 
         intensityRaw = np.array(intensities).reshape((resize,resize))
@@ -85,7 +88,7 @@ class ramanSpectra:
         p2, p98 = np.percentile(intensityRaw, (2, 98))
         intensityScaled = exposure.rescale_intensity(intensityRaw, in_range=(p2, p98))
 
-        return intensityScaled
+        return intensityRaw
 
     def nan_helper(self, y):
         """Helper to handle indices and logical indices of NaNs.

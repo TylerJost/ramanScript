@@ -22,5 +22,23 @@ for scan in scansRaw:
 # %
 img = scans[4].makeImage()
 
+p2, p98 = np.percentile(img, (2, 98))
+img = exposure.rescale_intensity(img, in_range=(p2, p98))
+
 plt.imshow(img, cmap='gray')
 plt.axis('off')
+# %%
+plt.plot(axisInfo, scan.spectra[80*100+88])
+plt.xlabel('Wavenumber (1/cm)')
+plt.ylabel('Normalized Intensity')
+plt.show()
+
+plt.plot(axisInfo, scan.spectra[0])
+plt.xlabel('Wavenumber (1/cm)')
+plt.ylabel('Normalized Intensity')
+plt.show()
+# %%
+intensityRange = np.where(np.logical_and(axisInfo<3000, axisInfo>2800))[0]
+spectra = scan.spectra[80*100+88]
+plt.plot(spectra[intensityRange[0]:intensityRange[-1]])
+arrayStart = np.where(axisInfo>=2800)[0][-1]
