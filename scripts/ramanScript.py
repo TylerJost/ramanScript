@@ -108,7 +108,44 @@ class ramanSpectra:
         """
 
         return np.isnan(y), lambda z: z.nonzero()[0]
+# %%
+def getRamanData(experiment='esamInit', keep='strict'):
+    """
+    Loads list of scans specified by class ramanSpectra
+    Inputs: 
+        - experiment: Experiment to be loaded (should be simply named {experiment}.npy)
+        - keep: Flag for whether or not to filter for square images and spectra of length of given axis information
+    Outputs:
+        - scans: List of scans of class ramanSpectra
+        - axisInfo: List that converts indices to wavenumber
+    """
+    isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
+    isAxis = lambda x : len(x) == len(axisInfo)
 
+    ramanData = f'../data/{experiment}.npy'
+
+    # Load appropriate file
+    if os.path.isfile(ramanData):
+        scansRaw = list(np.load(ramanData, allow_pickle=True))
+    else:
+        raise FileNotFoundError(f'Cannot find experiment {experiment}')
+    
+    # Get axis info
+    with open('../data/RamanAxisforMCR.txt') as f:
+        axisInfo = f.read()
+    
+    axisInfo = np.array([float(num) for num in axisInfo.split('\n')[1:-1]])
+    
+    # Keep only good scans unless otherwise stated
+    if keep == 'strict':
+        scans = []
+        for scan in scansRaw:
+            if isSquare(scan.spectra) and isAxis(scan.spectra[0]):
+                scans.append(scan)
+    else:
+        scans = scansRaw
+
+    return scans, axisInfo
 ## %%
 if __name__ == "__main__":
     experiment = 'esamInit'
@@ -121,4 +158,3 @@ if __name__ == "__main__":
                     spectras.append(ramanSpectra(fileName))
     print('Saving spectra')
     np.save(f'../data/{experiment}.npy', spectras)
-# %%
