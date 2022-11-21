@@ -1,9 +1,9 @@
 # %%
-from ramanScript import ramanSpectra
+from ramanScript import ramanSpectra, getRamanData
 import matplotlib.pyplot as plt
 import numpy as np
 
-# from skimage import io, exposure, data
+from skimage import io, exposure, data
 # %%
 isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
 isAxis = lambda x : len(x) == len(axisInfo)
