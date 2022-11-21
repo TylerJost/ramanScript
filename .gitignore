@@ -1,3 +1,2 @@
-*.txt
-*.npy
+data/
 __pycache__/
