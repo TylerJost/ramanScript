@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
+import json
 
 from skimage import exposure
-from skimage.io import imread, imsave
+from skimage.io import imsave
+from skimage.draw import polygon2mask
+
 from tqdm import tqdm
 # %%
 class ramanSpectra:
@@ -16,6 +19,7 @@ class ramanSpectra:
     def __init__(self, fileName):
         self.fileName = fileName
         fSplit = fileName.split('/')
+        self.experiment = fSplit[2]
         self.file = fSplit[-1]
         self.ramanParams = fSplit[-2]
         self.phenotype = fSplit[-3]
@@ -23,13 +27,44 @@ class ramanSpectra:
 
         # Getting the annotation portion
         imgName = f'{self.file.split(".")[0]}_{self.ramanParams}_{self.phenotype}.png'
-        imgPath = os.path.join(f'../data/{experiment}/images/{imgName}')
-        if not os.path.exists(imgPath):
-            img = self.makeImage()
-            imsave(imgPath, img)
+        imgPath = os.path.join(f'../data/{self.experiment}/images/{imgName}')
+        img = self.makeImage()
+        self.shape = img.shape
+        if img.size>0:
+            if not os.path.exists(imgPath):
+                imsave(imgPath, img)
+            self.cellSpectra = self.getCellIdx(img)
         else:
-            self.cellSpectra = self.getCellIdx()
-    
+            self.cellSpectra = np.array([])
+
+    def getCellIdx(self, img):
+        # Get annotation data
+        jsonData = f'../data/{self.experiment}/annotations.json'
+        with open(jsonData) as f:
+            coco = json.load(f)
+        imgIds = {}
+        for cocoImg in coco['images']:
+            imgIds[cocoImg['file_name']] = cocoImg['id']
+        imgName = f'{self.file.split(".")[0]}_{self.ramanParams}_{self.phenotype}.png'
+        if imgName in imgIds.keys():
+            annotations = [annotation for annotation in coco['annotations'] if annotation['image_id'] == imgIds[imgName] ]
+        else:
+            return np.array([])
+        fullMask = np.zeros(img.shape)
+        c = 1
+        for annotation in annotations:
+            seg = annotation['segmentation'][0]
+            # Converts RLE to polygon coordinates
+            seg = np.array(seg).reshape(-1,2)
+            # Necessary for mask conversion, otherwise coordinates are wrong
+            seg[:,[0,1]] = seg[:,[1,0]]
+            mask = polygon2mask(img.shape, seg)
+            mask = mask.astype('uint8')
+            # Set labels on full mask
+            mask[mask == 1] = c
+            fullMask += mask
+            c += 1
+        return fullMask.ravel()
     def getSpectra(self):
         """
         Read text file
@@ -82,7 +117,8 @@ class ramanSpectra:
         isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
         itensity = 'NaN'
         if not isSquare(self.spectra):
-            raise ValueError('Scan is not a square')
+            # raise ValueError('Scan is not a square')
+            return np.array([])
         
         intensities = []
 
@@ -131,7 +167,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
     isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
     isAxis = lambda x : len(x) == len(axisInfo)
 
-    ramanData = f'../data/{experiment}.npy'
+    ramanData = f'../data/{experiment}/{experiment}.npy'
 
     # Load appropriate file
     if os.path.isfile(ramanData):
@@ -155,7 +191,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
         scans = scansRaw
 
     return scans, axisInfo
-## %%
+# %%
 if __name__ == "__main__":
     experiment = 'esamInit'
     spectras = []
@@ -164,6 +200,14 @@ if __name__ == "__main__":
             for scan in files:
                 if scan.endswith('.txt'):
                     fileName = os.path.join(root, scan)
+                    print(f'Processing {scan}\t')
                     spectras.append(ramanSpectra(fileName))
     print('Saving spectra')
     np.save(f'../data/{experiment}.npy', spectras)
+# %%
+def myFunc(x):
+    if x == 2:
+        return 'hi'
+    
+    x = x**2
+    return x
