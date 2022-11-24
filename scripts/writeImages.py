@@ -7,6 +7,7 @@ import json
 
 from skimage import exposure
 from skimage.io import imsave, imread
+from skimage.draw import polygon2mask
 # %%
 experiment = 'esamInit'
 scans, axisInfo = getRamanData(experiment=experiment)
@@ -37,19 +38,13 @@ img = imread(imgPath)
 annotations = [annotation for annotation in coco['annotations'] if annotation['image_id'] == imgIds[imgName] ]
 seg = annotations[1]['segmentation'][0]
 seg = np.array(seg).reshape(-1,2)
-
+seg[:,[0,1]] = seg[:,[1,0]]
 plt.imshow(img)
 plt.plot(seg[:,0], seg[:,1], c = 'red')
 # %%
 # %%
-annotation = annotations[0]
-segmentation = [int(pxl) for pxl in annotation['segmentation'][0]]
-for px in segmentation:
-    img.flat[px] = 0
+experiment = 'esamInit'
+ramanData = np.load(f'../data/{experiment}.npy', allow_pickle=True)
 
 # %%
-height = img.shape[0]
-width = img.shape[1]
-rleNumbers = [int(num) for num in seg]
-mask = rleToMask(rleNumbers, height, width)
-plt.imshow(mask)
+scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
