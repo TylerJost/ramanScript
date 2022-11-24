@@ -5,7 +5,7 @@ import os
 import sys
 
 from skimage import exposure
-
+from skimage.io import imread, imsave
 from tqdm import tqdm
 # %%
 class ramanSpectra:
@@ -19,9 +19,18 @@ class ramanSpectra:
         self.file = fSplit[-1]
         self.ramanParams = fSplit[-2]
         self.phenotype = fSplit[-3]
-        self.spectraRaw, self.spectra = self.getData()
+        self.spectraRaw, self.spectra = self.getSpectra()
 
-    def getData(self):
+        # Getting the annotation portion
+        imgName = f'{self.file.split(".")[0]}_{self.ramanParams}_{self.phenotype}.png'
+        imgPath = os.path.join(f'../data/{experiment}/images/{imgName}')
+        if not os.path.exists(imgPath):
+            img = self.makeImage()
+            imsave(imgPath, img)
+        else:
+            self.cellSpectra = self.getCellIdx()
+    
+    def getSpectra(self):
         """
         Read text file
 
