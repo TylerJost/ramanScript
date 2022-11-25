@@ -192,6 +192,17 @@ def getRamanData(experiment='esamInit', keep='strict'):
 
     return scans, axisInfo
 # %%
+def getData(experiment, testSize=0.1):
+    ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
+    scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
+    phenotypes, spectra = [], []
+
+    for scan in scans:
+        isCell = np.where(scan.cellSpectra>0)[0]
+        for cell in isCell:
+            spectra.append(scan.spectra[cell])
+            phenotypes.append(scan.phenotype)
+# %%
 if __name__ == "__main__":
     experiment = 'esamInit'
     spectras = []
@@ -204,10 +215,3 @@ if __name__ == "__main__":
                     spectras.append(ramanSpectra(fileName))
     print('Saving spectra')
     np.save(f'../data/{experiment}.npy', spectras)
-# %%
-def myFunc(x):
-    if x == 2:
-        return 'hi'
-    
-    x = x**2
-    return x
