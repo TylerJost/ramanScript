@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 import json
+import random
 
 from skimage import exposure
 from skimage.io import imsave
@@ -192,7 +193,8 @@ def getRamanData(experiment='esamInit', keep='strict'):
 
     return scans, axisInfo
 # %%
-def getData(experiment, testSize=0.1):
+def getData(experiment):
+    # Load data
     ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
     scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
     phenotypes, spectra = [], []
@@ -202,6 +204,31 @@ def getData(experiment, testSize=0.1):
         for cell in isCell:
             spectra.append(scan.spectra[cell])
             phenotypes.append(scan.phenotype)
+    return spectra, phenotypes
+
+def splitDataBalanced(spectra, phenotypes, testSize=0.1, seed=1234, balanced=True):
+    # Encode as labels
+    uniquePheno = set(phenotypes)
+    nPheno = len(uniquePheno)
+    phenoDict = {phenotype: n for n, phenotype in zip(range(nPheno), uniquePheno)}
+    phenoLabels = [phenoDict[phenotype] for phenotype in phenotypes]
+
+    random.seed(seed)
+    l = list(zip(spectra, phenoLabels))
+    random.shuffle(l)
+    spectra, phenoLabels = zip(*l)
+    spectra, phenoLabels = np.array(spectra), np.array(phenoLabels)
+
+    if balanced:
+        # Find the least commonly occuring phenotype
+        minPheno = len(phenotypes)
+        for phenotype in uniquePheno:
+            nPheno = phenotypes.count(phenotype)
+            if nPheno<minPheno:
+                smallestPheno = phenotype
+                minPheno = nPheno
+        
+        for phenotype
 # %%
 if __name__ == "__main__":
     experiment = 'esamInit'
