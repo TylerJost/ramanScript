@@ -23,7 +23,7 @@ class MyDataset(Dataset):
         self.label = label
 
     def __getitem__(self, index):
-        return (torch.tensor(self.data[index], dtype=torch.float), torch.tensor(self.label[index], dtype=torch.long))
+        return (torch.tensor([self.data[index]], dtype=torch.float), torch.tensor(self.label[index], dtype=torch.long))
 
     def __len__(self):
         return len(self.data)

@@ -6,6 +6,8 @@ import sys
 import json
 import random
 
+from sklearn.model_selection import train_test_split
+
 from skimage import exposure
 from skimage.io import imsave
 from skimage.draw import polygon2mask
@@ -193,7 +195,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
 
     return scans, axisInfo
 # %%
-def getData(experiment):
+def loadSpectralData(experiment):
     # Load data
     ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
     scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
@@ -204,7 +206,7 @@ def getData(experiment):
         for cell in isCell:
             spectra.append(scan.spectra[cell])
             phenotypes.append(scan.phenotype)
-    return spectra, phenotypes
+    return np.array(spectra), phenotypes
 
 def splitDataBalanced(spectra, phenotypes, testSize=0.1, seed=1234, balanced=True):
     # Encode as labels
@@ -228,7 +230,20 @@ def splitDataBalanced(spectra, phenotypes, testSize=0.1, seed=1234, balanced=Tru
                 smallestPheno = phenotype
                 minPheno = nPheno
         
-        for phenotype
+        labelIdx = []
+        for phenoLabel in set(phenoLabels):
+            labelIdx += list(np.where(phenoLabels == phenoLabel)[0][0:minPheno])
+        spectra = spectra[labelIdx,:]
+        phenoLabels = phenoLabels[labelIdx]
+
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        spectra, phenoLabels, test_size=testSize, random_state=seed)
+    
+    return X_train, X_test, y_train, y_test
+# %%
+# spectra, phenotypes = getData('esamInit')
+# X_train, X_test, y_train, y_test = splitDataBalanced(spectra, phenotypes)
 # %%
 if __name__ == "__main__":
     experiment = 'esamInit'
