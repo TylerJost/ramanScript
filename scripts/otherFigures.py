@@ -31,3 +31,16 @@ imgOverlay = label2rgb(labelImage, image=img, bg_label=0, alpha=0.5)
 plt.imshow(imgOverlay)
 plt.axis('off')
 imsave('../figures/imgFilterOverlay.png', imgOverlay)
+# %%
+isCell = list(np.where(scan.cellSpectra == 1)[0])
+random.seed(1234)
+idx = random.shuffle(isCell)
+
+
+for i in range(5):
+    spectraCell = scan.spectra[isCell[i]]
+    plt.figure()
+    plt.plot(spectraCell)
+    plt.xlabel('Wavenumber (1/cm)')
+    plt.ylabel('Normalized Intensity')   
+    plt.savefig(f'../figures/signal{i}.png')
