@@ -78,6 +78,7 @@ for cell in uniqueCells:
 testIdx = np.where(np.isin(identifiers, cellsHoldout))[0]
 X_test = spectra[testIdx]
 y_test = phenoLabels[testIdx]
+# %%
 trainIdx = np.where(~np.isin(identifiers, cellsHoldout))[0]
 # Balance training data
 phenoCt = {phenotype: 0 for phenotype in set(phenotypes)}
@@ -87,9 +88,13 @@ phenotypesTrain = phenoLabels[trainIdx]
 spectraTrain = spectra[trainIdx]
 labelIdx = []
 for phenoLabel in set(phenoLabels):
-    labelIdx += list(np.where(phenoLabels == phenoLabel)[0][0:maxAmt])
-X_train = spectra[labelIdx, :]
-y_train = phenoLabels[labelIdx]
+    labelIdx += list(np.where(phenotypesTrain == phenoLabel)[0][0:maxAmt])
+X_train = spectraTrain[labelIdx, :]
+y_train = phenotypesTrain[labelIdx]
+# Shuffle again
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
 # %%
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
@@ -107,7 +112,7 @@ spectra, labels = dataiter.next()
 print(spectra.shape)
 # %%
 # Hyper-parameters
-num_epochs = 50
+num_epochs = 1
 # Model parameters
 device_str = "cuda"
 device = torch.device(device_str if torch.cuda.is_available() else "cpu")
