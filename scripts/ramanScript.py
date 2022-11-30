@@ -39,7 +39,13 @@ class ramanSpectra:
             self.cellSpectra = self.getCellIdx(img)
         else:
             self.cellSpectra = np.array([])
+
+    # Prints information
     def __str__(self):
+        """
+        Print information about cell as :
+        experiment-phenotype-raman parameters-scan name
+        """
         return f'{self.experiment}-{self.phenotype}-{self.ramanParams}-{self.file.split(".")[0]}'
     def __repr__(self):
         return self.__str__()
