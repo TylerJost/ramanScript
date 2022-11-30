@@ -252,11 +252,7 @@ def splitDataBalanced(spectra, phenotypes, testSize=0.1, seed=1234, balanced=Tru
     
     return X_train, X_test, y_train, y_test
 
-def shuffleLists(l, seed=1234):
-    random.seed(seed)
-    l = list(zip(*l))
-    random.shuffle(l)
-    return list(zip(*l))
+
 # %%
 # spectra, phenotypes = getData('esamInit')
 # X_train, X_test, y_train, y_test = splitDataBalanced(spectra, phenotypes)

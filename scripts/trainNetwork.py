@@ -8,7 +8,7 @@ from resnet1d import ResNet1D, MyDataset
 
 import numpy as np
 import pickle
-from collections import Counter
+
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix

@@ -7,7 +7,7 @@ Model source: https://github.com/hsd1503/resnet1d
 """
 # %%
 import numpy as np
-from collections import Counter
+
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report 
