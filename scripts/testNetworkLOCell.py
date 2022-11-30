@@ -76,6 +76,7 @@ for cell in uniqueCells:
 testIdx = np.where(np.isin(identifiers, cellsHoldout))[0]
 X_test = spectra[testIdx]
 y_test = phenoLabels[testIdx]
+# %%
 trainIdx = np.where(~np.isin(identifiers, cellsHoldout))[0]
 # Balance training data
 phenoCt = {phenotype: 0 for phenotype in set(phenotypes)}
@@ -85,9 +86,13 @@ phenotypesTrain = phenoLabels[trainIdx]
 spectraTrain = spectra[trainIdx]
 labelIdx = []
 for phenoLabel in set(phenoLabels):
-    labelIdx += list(np.where(phenoLabels == phenoLabel)[0][0:maxAmt])
-X_train = spectra[labelIdx, :]
-y_train = phenoLabels[labelIdx]
+    labelIdx += list(np.where(phenotypesTrain == phenoLabel)[0][0:maxAmt])
+X_train = spectraTrain[labelIdx, :]
+y_train = phenotypesTrain[labelIdx]
+# Shuffle again
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
 # %%
 batch_size=32
 train_dataset = MyDataset(X_train, y_train)

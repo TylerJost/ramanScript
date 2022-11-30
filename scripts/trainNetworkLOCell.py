@@ -112,7 +112,7 @@ spectra, labels = dataiter.next()
 print(spectra.shape)
 # %%
 # Hyper-parameters
-num_epochs = 1
+num_epochs = 50
 # Model parameters
 device_str = "cuda"
 device = torch.device(device_str if torch.cuda.is_available() else "cpu")
@@ -163,4 +163,6 @@ for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
 # plt.plot(allLoss)
 
 # %%
+reportName = f'{experiment}LOCellFinal'
 torch.save(model.state_dict(), f'../models/{experiment}LOCellFinal.pth')
+np.save(f'../models/{reportName}.npy', np.array(allLoss))
