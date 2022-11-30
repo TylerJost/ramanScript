@@ -1,7 +1,3 @@
-# %% [markdown]
-"""
-This is the neural network to load and train a neural network on time series classification data
-"""
 # %%
 from ramanScript import ramanSpectra, loadSpectralData, splitDataBalanced
 from resnet1d import ResNet1D, MyDataset
@@ -11,9 +7,12 @@ import pickle
 from collections import Counter
 from tqdm import tqdm
 from matplotlib import pyplot as plt
-import random
-from sklearn.metrics import classification_report, confusion_matrix
+import random 
+import umap
 
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 
 import torch
 import torch.nn as nn
@@ -22,6 +21,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # %matplotlib inline
+# %%
 # %%
 def shuffleLists(l, seed=1234):
     random.seed(seed)
@@ -91,71 +91,57 @@ for phenoLabel in set(phenoLabels):
 X_train = spectra[labelIdx, :]
 y_train = phenoLabels[labelIdx]
 # %%
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
+reducer = umap.UMAP()
+embeddingTrain = reducer.fit_transform(X_train)
+embeddingTest = reducer.fit_transform(X_test)
 
-batch_size=32
-print(X_train.shape, y_train.shape)
-train_dataset = MyDataset(X_train, y_train)
-test_dataset = MyDataset(X_test, y_test)
-train_loader = DataLoader(train_dataset, batch_size=batch_size)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, drop_last=False)
+embeddingFull = reducer.fit_transform(np.concatenate([X_train, X_test]))
+# %%
+phenoDict = {0: 'green', 1: 'red'}
+phenoColors = [phenoDict[phenotype] for phenotype in y_train]
+fig, ax = plt.subplots(figsize=(5,5))
+esamNegIdx = np.array(y_train) == 1
+plt.scatter(embeddingTrain[esamNegIdx,0], embeddingTrain[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
+plt.scatter(embeddingTrain[~esamNegIdx,0], embeddingTrain[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+
+for spine in ['top', 'right']:
+    ax.spines[spine].set_visible(False)
+plt.xticks([])
+plt.yticks([])
+plt.xlabel('UMAP 1')
+plt.ylabel('UMAP 2')
+plt.title('Raman Signal')
+lgnd = plt.legend(loc='upper right')
+for handle in lgnd.legendHandles:
+    handle.set_sizes([50.0])
+plt.show()
+# %%
+fig, ax = plt.subplots(figsize=(5,5))
+esamNegIdx = np.array(y_test) == 1
+plt.scatter(embeddingTest[esamNegIdx,0], embeddingTest[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
+plt.scatter(embeddingTest[~esamNegIdx,0], embeddingTest[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+
+for spine in ['top', 'right']:
+    ax.spines[spine].set_visible(False)
+plt.xticks([])
+plt.yticks([])
+plt.xlabel('UMAP 1')
+plt.ylabel('UMAP 2')
+plt.title('Raman Signal')
+lgnd = plt.legend(loc='upper right')
+for handle in lgnd.legendHandles:
+    handle.set_sizes([50.0])
+plt.show()
+# %%
+y_full = [f'train {pheno}' for pheno in y_train] + [f'test {pheno}' for pheno in y_test]
+colors = ['red', 'green', 'blue', 'magenta']
+fullDict = {pheno: color for pheno, color in zip(list(set(y_full)), colors)}
+y_full_colors = np.array([fullDict[pheno] for pheno in y_full])
+
+plt.figure(figsize=(10,10))
+
+is_train = np.array([1 if pt.startswith('train') else 0 for pt in y_full ]) == 1
+plt.scatter(embeddingFull[is_train,0], embeddingFull[is_train,1], s=1.5, c=y_full_colors[is_train], alpha=0.1)
+plt.scatter(embeddingFull[~is_train,0], embeddingFull[~is_train,1], s=6, c=y_full_colors[~is_train])
 
 # %%
-dataiter = iter(train_loader)
-spectra, labels = dataiter.next()
-print(spectra.shape)
-# %%
-# Hyper-parameters
-num_epochs = 50
-# Model parameters
-device_str = "cuda"
-device = torch.device(device_str if torch.cuda.is_available() else "cpu")
-kernel_size = 16
-stride = 2
-n_block = 48
-downsample_gap = 6
-increasefilter_gap = 12
-model = ResNet1D(
-    in_channels=1, 
-    base_filters=128, # 64 for ResNet1D, 352 for ResNeXt1D
-    kernel_size=kernel_size, 
-    stride=stride, 
-    groups=32, 
-    n_block=n_block, 
-    n_classes=2, 
-    downsample_gap=downsample_gap, 
-    increasefilter_gap=increasefilter_gap, 
-    use_do=True)
-model.to(device)
-
-# train and test
-model.verbose = False
-optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-3)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
-criterion = torch.nn.CrossEntropyLoss()
-# %%
-allLoss = []
-for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
-    # train
-    model.train()
-    for i, batch in enumerate(tqdm(train_loader, desc=f"spectra", position=0, leave=True)):
-
-        spectra, labels = tuple(t.to(device) for t in batch)
-        # spectra = spectra.to(device)
-        # labels = labels.to(device)
-
-        outputs = model(spectra)
-        loss = criterion(outputs, labels)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        allLoss.append(float(loss.cpu().detach().numpy()))
-    scheduler.step(loss)
-
-# %%
-# plt.plot(allLoss)
-
-# %%
-torch.save(model.state_dict(), f'../models/{experiment}LOCellFinal.pth')
