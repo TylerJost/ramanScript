@@ -74,6 +74,7 @@ for cell in uniqueCells:
 testIdx = np.where(np.isin(identifiers, cellsHoldout))[0]
 X_test = spectra[testIdx]
 y_test = phenoLabels[testIdx]
+# %%
 trainIdx = np.where(~np.isin(identifiers, cellsHoldout))[0]
 # Balance training data
 phenoCt = {phenotype: 0 for phenotype in set(phenotypes)}
@@ -83,9 +84,13 @@ phenotypesTrain = phenoLabels[trainIdx]
 spectraTrain = spectra[trainIdx]
 labelIdx = []
 for phenoLabel in set(phenoLabels):
-    labelIdx += list(np.where(phenoLabels == phenoLabel)[0][0:maxAmt])
-X_train = spectra[labelIdx, :]
-y_train = phenoLabels[labelIdx]
+    labelIdx += list(np.where(phenotypesTrain == phenoLabel)[0][0:maxAmt])
+X_train = spectraTrain[labelIdx, :]
+y_train = phenotypesTrain[labelIdx]
+# Shuffle again
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
 # %%
 reducer = umap.UMAP()
 embeddingTrain = reducer.fit_transform(X_train)
@@ -124,20 +129,38 @@ plt.yticks([])
 plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
 plt.title('Raman Signal')
-lgnd = plt.legend(loc='upper right')
+lgnd = plt.legend(loc='lower left')
 for handle in lgnd.legendHandles:
     handle.set_sizes([50.0])
 plt.show()
 # %%
 y_full = [f'train {pheno}' for pheno in y_train] + [f'test {pheno}' for pheno in y_test]
-colors = ['red', 'green', 'blue', 'magenta']
+colors = ['red','blue', 'green', 'magenta']
 fullDict = {pheno: color for pheno, color in zip(list(set(y_full)), colors)}
 y_full_colors = np.array([fullDict[pheno] for pheno in y_full])
 
 plt.figure(figsize=(10,10))
 
 is_train = np.array([1 if pt.startswith('train') else 0 for pt in y_full ]) == 1
+is_test0 = np.array([1 if pt.startswith('test') and pt.endswith('0') else 0 for pt in y_full ]) == 1
+is_test1 = np.array([1 if pt.startswith('test') and pt.endswith('1') else 0 for pt in y_full ]) == 1
+
 plt.scatter(embeddingFull[is_train,0], embeddingFull[is_train,1], s=1.5, c=y_full_colors[is_train], alpha=0.1)
-plt.scatter(embeddingFull[~is_train,0], embeddingFull[~is_train,1], s=6, c=y_full_colors[~is_train])
+plt.scatter(embeddingFull[is_test0,0], embeddingFull[is_test0,1], s=6, c=y_full_colors[is_test0], label='Test ESAM (-)')
+plt.scatter(embeddingFull[is_test1,0], embeddingFull[is_test1,1], s=6, c=y_full_colors[is_test1], label='Test ESAM (+)')
+
+lgnd = plt.legend(loc='upper right')
+for handle in lgnd.legendHandles:
+    handle.set_sizes([50.0])
+    handle.set_alpha(1)
+
+for spine in ['top', 'right']:
+    ax.spines[spine].set_visible(False)
+plt.xticks([])
+plt.yticks([])
+plt.xlabel('UMAP 1')
+plt.ylabel('UMAP 2')
+plt.title('Raman Signal Leave Out Cell')
+plt.show()
 
 # %%
