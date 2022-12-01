@@ -23,11 +23,7 @@ from torch.utils.data import Dataset, DataLoader
 # %matplotlib inline
 # %%
 # %%
-def shuffleLists(l, seed=1234):
-    random.seed(seed)
-    l = list(zip(*l))
-    random.shuffle(l)
-    return list(zip(*l))
+
 # %% Getting data
 experiment = 'esamInit'
 ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
