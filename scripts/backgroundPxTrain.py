@@ -191,7 +191,7 @@ model.load_state_dict(torch.load(f'../models/{reportName}.pth', map_location=dev
 probs = []
 allLabels = []
 scores = []
-for i, batch in enumerate(tqdm(train_loader, desc=f"spectra", position=0, leave=True)):
+for i, batch in enumerate(tqdm(test_loader, desc=f"spectra", position=0, leave=True)):
 
     spectra, labels = tuple(t.to(device) for t in batch)
     # spectra = spectra.to(device)
@@ -206,12 +206,12 @@ probs = np.concatenate(probs)
 allLabels = np.concatenate(allLabels)
 scores = np.concatenate(scores)
 # TODO: Fix switched labels(?)
-allLabels = ~allLabels+2
+allLabelsSwitch = ~allLabels+2
 assert set(allLabels) == {0,1}
 pred = np.argmax(probs, axis=1)
 # %%
-fpr, tpr, _ = roc_curve(allLabels, scores[:,1])
-roc_auc = roc_auc_score(allLabels, scores[:,1])
+fpr, tpr, _ = roc_curve(allLabelsSwitch, scores[:,0])
+roc_auc = roc_auc_score(allLabelsSwitch, scores[:,0])
 
 plt.figure(figsize=(6,6))
 plt.rcParams.update({'font.size': 17})
@@ -223,4 +223,4 @@ plt.title(f'AUC = {roc_auc:0.3f}')
 
 plt.savefig('../figures/rocCurveBackground.png', dpi=600)
 plt.show()
-
+# %%

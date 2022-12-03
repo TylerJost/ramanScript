@@ -29,7 +29,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # %matplotlib inline
 # %% Flags
-train = 1
+train = 0
 # %% Gather data
 experiment = 'esamInit'
 ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
@@ -44,6 +44,9 @@ holdout = [ 'esamInit-esamPos-0.5umPerPixel-Scan3',
 
 # holdout = [ 'esamInit-esamPos-0.5umPerPixel-Scan3', 
 #             'esamInit-esamNeg-0.5umPerPixel-Scan3']
+
+holdout = [ 'esamInit-esamNeg-1umPerPixel-Scan2',
+            'esamInit-esamPos-1umPerPixel-Scan3']
 testScans, trainScans = [], []
 for scan in scans:
     if scan.__str__() in holdout:
@@ -170,7 +173,7 @@ model.load_state_dict(torch.load(f'../models/{reportName}.pth', map_location=dev
 probs = []
 allLabels = []
 scores = []
-for i, batch in enumerate(tqdm(train_loader, desc=f"spectra", position=0, leave=True)):
+for i, batch in enumerate(tqdm(test_loader, desc=f"spectra", position=0, leave=True)):
 
     spectra, labels = tuple(t.to(device) for t in batch)
     # spectra = spectra.to(device)
@@ -199,3 +202,6 @@ plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title(f'AUC = {roc_auc:0.3f}')
+
+np.save('../results/leaveOutScanROC.npy',[fpr, tpr, allLabels, scores])
+# %%

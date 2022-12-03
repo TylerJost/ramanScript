@@ -1,5 +1,5 @@
 # %%
-from ramanScript import ramanSpectra, loadSpectralData, splitDataBalanced
+from ramanScript import ramanSpectra, loadSpectralData, splitDataBalanced, shuffleLists
 from resnet1d import ResNet1D, MyDataset
 
 import numpy as np
@@ -21,8 +21,6 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 # %matplotlib inline
-# %%
-# %%
 
 # %% Getting data
 experiment = 'esamInit'
@@ -156,6 +154,107 @@ for handle in lgnd.legendHandles:
 
 for spine in ['top', 'right']:
     ax.spines[spine].set_visible(False)
+plt.xticks([])
+plt.yticks([])
+plt.xlabel('UMAP 1')
+plt.ylabel('UMAP 2')
+plt.title('Raman Signal Leave Out Cell')
+plt.show()
+
+# %%
+# holdout = [ 'esamInit-esamPos-0.5umPerPixel-Scan3', 
+#             'esamInit-esamNeg-0.5umPerPixel-Scan3',
+#             'esamInit-esamNeg-1umPerPixel-Scan2',
+#             'esamInit-esamPos-1umPerPixel-Scan3']
+
+holdout = [ 'esamInit-esamPos-0.5umPerPixel-Scan3', 
+            'esamInit-esamNeg-0.5umPerPixel-Scan3']
+
+holdout = [ 'esamInit-esamNeg-1umPerPixel-Scan2',
+            'esamInit-esamPos-1umPerPixel-Scan3']
+testScans, trainScans = [], []
+for scan in scans:
+    if scan.__str__() in holdout:
+        testScans.append(scan)
+    else:
+        trainScans.append(scan)
+
+#  Separate out balanced train/test splits
+phenotypes = []
+for scan in trainScans:
+    isCell = scan.cellSpectra>0
+    phenotypes += [scan.phenotype]*sum(isCell)
+
+maxAmt = min(np.unique(phenotypes, return_counts=True)[1])
+
+# Get all spectra for training
+X_train, y_train = [], []
+for scan in trainScans:
+    isCell = scan.cellSpectra>0
+    X_train.append(scan.spectra[isCell])
+    y_train += [scan.phenotype]*sum(isCell)
+X_train = np.concatenate(X_train)
+y_train = np.array(y_train)
+# Shuffle so we can get points from each scan
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+trainIdx = []
+# Balance dataset
+for phenotype in set(y_train):
+    isPhenotype = np.where(y_train == phenotype)[0]
+    isPhenotype = isPhenotype[0:maxAmt]
+    trainIdx += list(isPhenotype)
+# Shuffle again
+X_train = X_train[trainIdx,:]
+y_train = y_train[trainIdx]
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+
+# Get test spectra
+X_test, y_test = [], []
+for scan in testScans:
+    isCell = scan.cellSpectra>0
+    X_test.append(scan.spectra[isCell])
+    y_test += [scan.phenotype]*sum(isCell)
+X_test = np.concatenate(X_test)
+y_test = np.array(y_test)
+
+uniquePheno = set(phenotypes)
+phenoDict = {phenotype: n for n, phenotype in zip(range(len(uniquePheno)), uniquePheno)}
+y_train = np.array([phenoDict[pt] for pt in y_train])
+y_test =  np.array([phenoDict[pt] for pt in y_test])
+# %%
+reducer = umap.UMAP()
+# embeddingTrain = reducer.fit_transform(X_train)
+# embeddingTest = reducer.fit_transform(X_test)
+
+embeddingFull = reducer.fit_transform(np.concatenate([X_train, X_test]))
+# %%
+y_full = [f'train {pheno}' for pheno in y_train] + [f'test {pheno}' for pheno in y_test]
+colors = ['red','blue', 'green', 'magenta']
+fullDict = {pheno: color for pheno, color in zip(list(set(y_full)), colors)}
+y_full_colors = np.array([fullDict[pheno] for pheno in y_full])
+
+plt.figure(figsize=(10,10))
+
+is_train = np.array([1 if pt.startswith('train') else 0 for pt in y_full ]) == 1
+is_test0 = np.array([1 if pt.startswith('test') and pt.endswith('0') else 0 for pt in y_full ]) == 1
+is_test1 = np.array([1 if pt.startswith('test') and pt.endswith('1') else 0 for pt in y_full ]) == 1
+
+plt.scatter(embeddingFull[is_train,0], embeddingFull[is_train,1], s=1.5, c=y_full_colors[is_train], alpha=0.1)
+plt.scatter(embeddingFull[is_test0,0], embeddingFull[is_test0,1], s=6, c=y_full_colors[is_test0], label='Test ESAM (-)')
+plt.scatter(embeddingFull[is_test1,0], embeddingFull[is_test1,1], s=6, c=y_full_colors[is_test1], label='Test ESAM (+)')
+
+lgnd = plt.legend(loc='upper right')
+for handle in lgnd.legendHandles:
+    handle.set_sizes([50.0])
+    handle.set_alpha(1)
+
+# for spine in ['top', 'right']:
+#     ax.spines[spine].set_visible(False)
+
 plt.xticks([])
 plt.yticks([])
 plt.xlabel('UMAP 1')
