@@ -160,4 +160,6 @@ plt.title(f'AUC = {roc_auc:0.3f}')
 
 plt.savefig('../figures/rocCurveLOCell.png', dpi=600)
 plt.show()
+
+np.save('../results/leaveOutCellROC.npy', [fpr, tpr, roc_auc])
 # %%

@@ -223,4 +223,6 @@ plt.title(f'AUC = {roc_auc:0.3f}')
 
 plt.savefig('../figures/rocCurveBackground.png', dpi=600)
 plt.show()
+np.save('../results/backgroundPxROC.npy', [fpr, tpr, roc_auc])
+
 # %%

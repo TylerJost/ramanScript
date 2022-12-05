@@ -25,7 +25,7 @@ embedding = reducer.fit_transform(spectra)
 # %%
 phenoDict = {'esamPos': 'green', 'esamNeg': 'red'}
 phenoColors = [phenoDict[phenotype] for phenotype in phenotypes]
-fig, ax = plt.subplots(figsize=(5,5))
+fig, ax = plt.subplots(figsize=(8,8))
 esamNegIdx = np.array(phenotypes) == 'esamNeg'
 plt.scatter(embedding[esamNegIdx,0], embedding[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
 plt.scatter(embedding[~esamNegIdx,0], embedding[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
@@ -36,11 +36,11 @@ plt.xticks([])
 plt.yticks([])
 plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
-plt.title('Raman Signal')
+plt.title('MDA-MB-231\nRaman Signal')
 lgnd = plt.legend(loc='upper right')
 for handle in lgnd.legendHandles:
     handle.set_sizes([50.0])
-plt.savefig('../figures/ramanUMAP.png', dpi=600)
+plt.savefig('../figures/ramanUMAP.png', dpi=300)
 plt.show()
 
 # %% Trying to determine noisiness

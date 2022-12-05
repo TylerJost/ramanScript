@@ -91,34 +91,25 @@ X_train = np.array(X_train)
 y_train = np.array(y_train)
 # %%
 reducer = umap.UMAP()
-embeddingTrain = reducer.fit_transform(X_train)
-embeddingTest = reducer.fit_transform(X_test)
+# embeddingTrain = reducer.fit_transform(X_train)
+# embeddingTest = reducer.fit_transform(X_test)
 
 embeddingFull = reducer.fit_transform(np.concatenate([X_train, X_test]))
 # %%
-phenoDict = {0: 'green', 1: 'red'}
-phenoColors = [phenoDict[phenotype] for phenotype in y_train]
-fig, ax = plt.subplots(figsize=(5,5))
-esamNegIdx = np.array(y_train) == 1
-plt.scatter(embeddingTrain[esamNegIdx,0], embeddingTrain[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
-plt.scatter(embeddingTrain[~esamNegIdx,0], embeddingTrain[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+y_full = [f'train {pheno}' for pheno in y_train] + [f'test {pheno}' for pheno in y_test]
+colors = ['red','blue', 'green', 'magenta']
+fullDict = {pheno: color for pheno, color in zip(list(set(y_full)), colors)}
+y_full_colors = np.array([fullDict[pheno] for pheno in y_full])
 
-for spine in ['top', 'right']:
-    ax.spines[spine].set_visible(False)
-plt.xticks([])
-plt.yticks([])
-plt.xlabel('UMAP 1')
-plt.ylabel('UMAP 2')
-plt.title('Raman Signal')
+plt.figure(figsize=(10,10))
+
+
+plt.scatter(embeddingFull[:,0], embeddingFull[:,1], s=1.5, c=y_full_colors)
+
 lgnd = plt.legend(loc='upper right')
 for handle in lgnd.legendHandles:
     handle.set_sizes([50.0])
-plt.show()
-# %%
-fig, ax = plt.subplots(figsize=(5,5))
-esamNegIdx = np.array(y_test) == 1
-plt.scatter(embeddingTest[esamNegIdx,0], embeddingTest[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
-plt.scatter(embeddingTest[~esamNegIdx,0], embeddingTest[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+    handle.set_alpha(1)
 
 for spine in ['top', 'right']:
     ax.spines[spine].set_visible(False)
@@ -126,11 +117,45 @@ plt.xticks([])
 plt.yticks([])
 plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
-plt.title('Raman Signal')
-lgnd = plt.legend(loc='lower left')
-for handle in lgnd.legendHandles:
-    handle.set_sizes([50.0])
+plt.title('Raman Signal Leave Out Cell')
 plt.show()
+
+# %%
+# phenoDict = {0: 'green', 1: 'red'}
+# phenoColors = [phenoDict[phenotype] for phenotype in y_train]
+# fig, ax = plt.subplots(figsize=(5,5))
+# esamNegIdx = np.array(y_train) == 1
+# plt.scatter(embeddingTrain[esamNegIdx,0], embeddingTrain[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
+# plt.scatter(embeddingTrain[~esamNegIdx,0], embeddingTrain[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+
+# for spine in ['top', 'right']:
+#     ax.spines[spine].set_visible(False)
+# plt.xticks([])
+# plt.yticks([])
+# plt.xlabel('UMAP 1')
+# plt.ylabel('UMAP 2')
+# plt.title('Raman Signal')
+# lgnd = plt.legend(loc='upper right')
+# for handle in lgnd.legendHandles:
+#     handle.set_sizes([50.0])
+# plt.show()
+# # %%
+# fig, ax = plt.subplots(figsize=(5,5))
+# esamNegIdx = np.array(y_test) == 1
+# plt.scatter(embeddingTest[esamNegIdx,0], embeddingTest[esamNegIdx,1], s=1.5, c='red', alpha=0.75, label='ESAM (-)')
+# plt.scatter(embeddingTest[~esamNegIdx,0], embeddingTest[~esamNegIdx,1], s=1.5, c='green', alpha=0.75, label='ESAM (+)')
+
+# for spine in ['top', 'right']:
+#     ax.spines[spine].set_visible(False)
+# plt.xticks([])
+# plt.yticks([])
+# plt.xlabel('UMAP 1')
+# plt.ylabel('UMAP 2')
+# plt.title('Raman Signal')
+# lgnd = plt.legend(loc='lower left')
+# for handle in lgnd.legendHandles:
+#     handle.set_sizes([50.0])
+# plt.show()
 # %%
 y_full = [f'train {pheno}' for pheno in y_train] + [f'test {pheno}' for pheno in y_test]
 colors = ['red','blue', 'green', 'magenta']
