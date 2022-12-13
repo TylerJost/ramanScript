@@ -27,6 +27,7 @@ class ramanSpectra:
         self.ramanParams = fSplit[-2]
         self.phenotype = fSplit[-3]
         self.spectraRaw, self.spectra = self.getSpectra()
+        self.spectraDenoised = self.spectraDenoise()
 
         # Getting the annotation portion
         imgName = f'{self.file.split(".")[0]}_{self.ramanParams}_{self.phenotype}.png'
@@ -36,11 +37,12 @@ class ramanSpectra:
         if img.size>0:
             if not os.path.exists(imgDir):
                 os.makedirs(imgDir)
-            imgPath = os.path.join(imgDir, imgName)
+            imgPath = os.path.join (imgDir, imgName)
             imsave(imgPath, img)
             self.cellSpectra = self.getCellIdx(img)
         else:
             self.cellSpectra = np.array([])
+
 
     # Prints information
     def __str__(self):
@@ -128,6 +130,34 @@ class ramanSpectra:
         spectraNorm = np.array(spectraNorm)
         return spectra, spectraNorm
 
+    def spectraDenoise(self, minWN = 1727, maxWN = 2820):
+        """
+        Denoises spectra by removing wavenumbers 1725 - 2820 cm^-1 (default). 
+        Max and min refer to absolute wave numbers, not index values. 
+        Returned values are the normalized spectra, not raw numbers.
+        
+        Input:
+            - self.spectra: Input spectra numpy array
+        Output:
+            - spectraDenoised: Numpy array with wavenumbers removed
+        """
+        with open(f'../data/{self.experiment}/RamanAxisforMCR.txt') as f:
+            axisInfo = f.read()
+
+        axisInfo = np.array([float(num) for num in axisInfo.split('\n')[1:-1]])
+
+        idxMin = np.argmin(np.abs(axisInfo-minWN))
+
+        idxMax = np.argmin(np.abs(axisInfo-maxWN))
+        
+        spectraDenoised = []
+        for spectra in self.spectra:
+            spectra = np.concatenate([spectra[0:idxMax], spectra[idxMin:]])
+            spectraDenoised.append(spectra)
+        spectraDenoised = np.array(spectraDenoised)
+        
+        return spectraDenoised
+
     def makeImage(self, improveContrast = True):
         """
         Input: array of spectra
@@ -173,6 +203,7 @@ class ramanSpectra:
         """
 
         return np.isnan(y), lambda z: z.nonzero()[0]
+# %%
 # %%
 def getRamanData(experiment, dataPath = '../../data', keep='strict'):
     """
@@ -271,6 +302,7 @@ def shuffleLists(l, seed=1234):
 # %%
 if __name__ == "__main__":
     experiment = sys.argv[1]
+    experiment = 'esam2'
     print(f'Getting experiment {experiment}')
     spectras = []
     for root, dirs, files in os.walk(f'../data/{experiment}/scans'):
@@ -282,3 +314,5 @@ if __name__ == "__main__":
                     spectras.append(ramanSpectra(fileName))
     print('Saving spectra')
     np.save(f'../data/{experiment}/{experiment}.npy', spectras)
+
+# %%
