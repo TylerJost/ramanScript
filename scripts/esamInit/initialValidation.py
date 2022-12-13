@@ -6,7 +6,7 @@ import pandas as pd
 
 import umap
 # %% Load data
-experiment = 'esamInit'
+experiment = 'esam2'
 ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
 scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
 
