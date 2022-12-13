@@ -100,9 +100,10 @@ class ramanSpectra:
         spectraRaw = spectraRaw[0:-1]
         spectraRaw = [spec.split('\t') for spec in spectraRaw]
 
+    
         # Sometimes there is a blank line
         # To avoid this, we interpolate the value
-        spectra, spectraInterp = [], []
+        spectra, spectraNorm = [], []
         for spec in tqdm(spectraRaw[1:], desc=self.fileName):
             specFloat = []
             for i, val in enumerate(spec):
@@ -115,17 +116,17 @@ class ramanSpectra:
                         specFloat.append(np.NaN)
             specFloat = np.array(specFloat)
             specFloatInterp = specFloat.copy()
-            # Interpolate values
+            # Interpolate values (NaNs)
             nans, idxFun = self.nan_helper(specFloat)
             specFloatInterp[nans] = np.interp(idxFun(nans), idxFun(~nans), specFloat[~nans])
             # Normalize by max
             specFloatNorm = specFloatInterp/np.max(specFloatInterp)
 
             spectra.append(specFloatInterp)
-            spectraInterp.append(specFloatNorm)
+            spectraNorm.append(specFloatNorm)
         spectra = np.array(spectra)
-        spectraInterp = np.array(spectraInterp)
-        return spectra, spectraInterp
+        spectraNorm = np.array(spectraNorm)
+        return spectra, spectraNorm
 
     def makeImage(self, improveContrast = True):
         """
@@ -173,11 +174,12 @@ class ramanSpectra:
 
         return np.isnan(y), lambda z: z.nonzero()[0]
 # %%
-def getRamanData(experiment='esamInit', keep='strict'):
+def getRamanData(experiment, dataPath = '../../data', keep='strict'):
     """
     Loads list of scans specified by class ramanSpectra
     Inputs: 
         - experiment: Experiment to be loaded (should be simply named {experiment}.npy)
+        - dataPath: Path to plug in experiment data for relative data loading
         - keep: Flag for whether or not to filter for square images and spectra of length of given axis information
     Outputs:
         - scans: List of scans of class ramanSpectra
@@ -186,7 +188,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
     isSquare = lambda x : int(np.sqrt(len(x))) == np.sqrt(len(x))
     isAxis = lambda x : len(x) == len(axisInfo)
 
-    ramanData = f'../data/{experiment}/{experiment}.npy'
+    ramanData = f'{dataPath}/{experiment}/{experiment}.npy'
 
     # Load appropriate file
     if os.path.isfile(ramanData):
@@ -195,7 +197,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
         raise FileNotFoundError(f'Cannot find experiment {experiment}')
     
     # Get axis info
-    with open('../data/{experiment}/RamanAxisforMCR.txt') as f:
+    with open(f'{dataPath}/{experiment}/RamanAxisforMCR.txt') as f:
         axisInfo = f.read()
     
     axisInfo = np.array([float(num) for num in axisInfo.split('\n')[1:-1]])
