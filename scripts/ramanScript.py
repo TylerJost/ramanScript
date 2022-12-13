@@ -30,12 +30,14 @@ class ramanSpectra:
 
         # Getting the annotation portion
         imgName = f'{self.file.split(".")[0]}_{self.ramanParams}_{self.phenotype}.png'
-        imgPath = os.path.join(f'../data/{self.experiment}/images/{imgName}')
+        imgDir = os.path.join(f'../data/{self.experiment}/images/')
         img = self.makeImage()
         self.shape = img.shape
         if img.size>0:
-            if not os.path.exists(imgPath):
-                imsave(imgPath, img)
+            if not os.path.exists(imgDir):
+                os.makedirs(imgDir)
+            imgPath = os.path.join(imgDir, imgName)
+            imsave(imgPath, img)
             self.cellSpectra = self.getCellIdx(img)
         else:
             self.cellSpectra = np.array([])
@@ -53,6 +55,8 @@ class ramanSpectra:
     def getCellIdx(self, img):
         # Get annotation data
         jsonData = f'../data/{self.experiment}/annotations.json'
+        if not os.path.exists(jsonData):
+            return []
         with open(jsonData) as f:
             coco = json.load(f)
         imgIds = {}
@@ -78,6 +82,7 @@ class ramanSpectra:
             fullMask += mask
             c += 1
         return fullMask.ravel()
+
     def getSpectra(self):
         """
         Read text file
@@ -122,7 +127,7 @@ class ramanSpectra:
         spectraInterp = np.array(spectraInterp)
         return spectra, spectraInterp
 
-    def makeImage(self):
+    def makeImage(self, improveContrast = True):
         """
         Input: array of spectra
         Output: Square image of summed intensities in the 2800-3000 wavenumber area
@@ -141,10 +146,11 @@ class ramanSpectra:
 
         intensityRaw = np.array(intensities).reshape((resize,resize))
         
-        # Filter image (optimal so far)
-        # Because the data is self contained I won't include the raw image
-        p2, p98 = np.percentile(intensityRaw, (2, 98))
-        intensityScaled = exposure.rescale_intensity(intensityRaw, in_range=(p2, p98))
+        if improveContrast:
+            # Filter image (optimal so far)
+            # Because the data is self contained I won't include the raw image
+            p2, p98 = np.percentile(intensityRaw, (2, 98))
+            intensityRaw = exposure.rescale_intensity(intensityRaw, in_range=(p2, p98))
 
         return intensityRaw
 
@@ -189,7 +195,7 @@ def getRamanData(experiment='esamInit', keep='strict'):
         raise FileNotFoundError(f'Cannot find experiment {experiment}')
     
     # Get axis info
-    with open('../data/RamanAxisforMCR.txt') as f:
+    with open('../data/{experiment}/RamanAxisforMCR.txt') as f:
         axisInfo = f.read()
     
     axisInfo = np.array([float(num) for num in axisInfo.split('\n')[1:-1]])
@@ -262,14 +268,15 @@ def shuffleLists(l, seed=1234):
 # X_train, X_test, y_train, y_test = splitDataBalanced(spectra, phenotypes)
 # %%
 if __name__ == "__main__":
-    experiment = 'esamInit'
+    experiment = sys.argv[1]
+    print(f'Getting experiment {experiment}')
     spectras = []
-    for root, dirs, files in os.walk(f'../data/{experiment}'):
+    for root, dirs, files in os.walk(f'../data/{experiment}/scans'):
         if len(files)>0:
             for scan in files:
                 if scan.endswith('.txt'):
                     fileName = os.path.join(root, scan)
-                    print(f'Processing {scan}\t')
+                    print(f'\tProcessing {scan}\t')
                     spectras.append(ramanSpectra(fileName))
     print('Saving spectra')
-    np.save(f'../data/{experiment}.npy', spectras)
+    np.save(f'../data/{experiment}/{experiment}.npy', spectras)
