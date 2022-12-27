@@ -24,7 +24,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # %% Getting data
 experiment = 'esamInit'
-ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
+ramanData = np.load(f'../../data/{experiment}/{experiment}.npy', allow_pickle=True)
 scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
 
 # %%
