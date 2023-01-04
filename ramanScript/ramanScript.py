@@ -16,7 +16,27 @@ from tqdm import tqdm
 # %%
 class ramanSpectra:
     """
-    Stores raman spectra information
+    Stores raman spectra information. 
+
+    Attributes
+    ----
+    - fileName: Original file name and relative path
+    - experiment: Name of collection experiment
+    - file: Initial collection name
+    - ramanParams: Parameters used for raman spectroscopy
+    - phenotype: Experimental condition
+    - spectraRaw: Raw spectra values from raman spectroscopy
+    - spectra: Normalized spectra
+    - spectraDenoised: Spectra that removes wavenumbers 1725 - 2820 cm^-1 by default
+    - shape: Size of image formed of spectra
+    - cellSpectra: Reports which scans are of cells and which are of background pixels
+
+    Methods
+    ----
+    getSpectra(): Mines experiment folder for spectroscopy data
+    spectraDenoise(minWN, maxWN): Removes wavenumbers
+    makeImage(improveContrast): Makes image from spectra data. Assumes length is a perfect square.
+
     """
 
     def __init__(self, fileName):
@@ -90,10 +110,10 @@ class ramanSpectra:
         Read text file
 
         Input:
-        Relative file path
+            - Relative file path
 
         Output:
-        Interpolated spectra as list
+            - Interpolated spectra as list
         """
         # Read text file
         with open(self.fileName) as f:

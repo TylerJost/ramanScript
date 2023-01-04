@@ -18,3 +18,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+# %%
+# %% Getting data
+experiment = 'esam2'
+ramanData = np.load(f'../../data/{experiment}/{experiment}.npy', allow_pickle=True)
+scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
+# %%
