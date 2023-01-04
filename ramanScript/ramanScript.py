@@ -204,7 +204,6 @@ class ramanSpectra:
 
         return np.isnan(y), lambda z: z.nonzero()[0]
 # %%
-# %%
 def getRamanData(experiment, dataPath = '../../data', keep='strict'):
     """
     Loads list of scans specified by class ramanSpectra
@@ -302,7 +301,7 @@ def shuffleLists(l, seed=1234):
 # %%
 if __name__ == "__main__":
     experiment = sys.argv[1]
-    experiment = 'esam2'
+    # experiment = 'esam2'
     print(f'Getting experiment {experiment}')
     spectras = []
     for root, dirs, files in os.walk(f'../data/{experiment}/scans'):

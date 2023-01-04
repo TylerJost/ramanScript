@@ -5,7 +5,7 @@ time series classification data
 """
 # %%
 import sys
-sys.path.append('../../')
+sys.path.append('../../ramanScript')
 from ramanScript import ramanSpectra, shuffleLists
 from resnet1d import ResNet1D, MyDataset
 
@@ -26,8 +26,8 @@ from torch.utils.data import Dataset, DataLoader
 
 # %matplotlib inline
 # %% Getting data
-experiment = 'esamInit'
-ramanData = np.load(f'../data/{experiment}/{experiment}.npy', allow_pickle=True)
+experiment = 'esam2'
+ramanData = np.load(f'../../data/{experiment}/{experiment}.npy', allow_pickle=True)
 scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
 
 # %%
@@ -53,7 +53,7 @@ phenoDict = {phenotype: n for n, phenotype in zip(range(len(uniquePheno)), uniqu
 phenoLabels = np.array([phenoDict[phenotype] for phenotype in phenotypes])
 
 # I want to hold out n # cells from each phenotype
-nHoldouts = 3
+nHoldouts = 5
 
 # Shuffle so that we know scans + cell numbers to hold out on
 uniqueCells = list(set(identifiers))
@@ -155,11 +155,16 @@ for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
         optimizer.step()
         allLoss.append(float(loss.cpu().detach().numpy()))
     scheduler.step(loss)
+    if epoch % 5  == 0:
+        print('Writing model results')
+        reportName = f'{experiment}LOCellFinal'
+        torch.save(model.state_dict(), f'../../models/{experiment}LOCellFinal.pth')
+        np.save(f'../../models/{reportName}.npy', np.array(allLoss))
 
 # %%
 # plt.plot(allLoss)
 
 # %%
 reportName = f'{experiment}LOCellFinal'
-torch.save(model.state_dict(), f'../models/{experiment}LOCellFinal.pth')
-np.save(f'../models/{reportName}.npy', np.array(allLoss))
+torch.save(model.state_dict(), f'../../models/{experiment}LOCellFinal.pth')
+np.save(f'../../models/{reportName}.npy', np.array(allLoss))
