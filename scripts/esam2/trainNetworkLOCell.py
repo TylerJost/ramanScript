@@ -27,6 +27,8 @@ from torch.utils.data import Dataset, DataLoader
 # %matplotlib inline
 # %% Getting data
 experiment = 'esam2'
+reportName = f'{experiment}LOCellDenoisedFinal'
+
 ramanData = np.load(f'../../data/{experiment}/{experiment}.npy', allow_pickle=True)
 scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
 
@@ -37,7 +39,7 @@ phenotypes, spectra, cellLabels, identifiers = [], [], [], []
 for scan in tqdm(scans):
     isCell = np.where(scan.cellSpectra>0)[0]
     for cell in isCell:
-        spectra.append(scan.spectra[cell])
+        spectra.append(scan.spectraDenoised[cell])
         phenotypes.append(scan.phenotype)
         identifier = scan.__str__()
         cellNum = scan.cellSpectra[cell]
@@ -156,8 +158,6 @@ for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
         allLoss.append(float(loss.cpu().detach().numpy()))
     scheduler.step(loss)
     if epoch % 5  == 0:
-        print('Writing model results')
-        reportName = f'{experiment}LOCellFinal'
         torch.save(model.state_dict(), f'../../models/{experiment}LOCellFinal.pth')
         np.save(f'../../models/{reportName}.npy', np.array(allLoss))
 
@@ -165,6 +165,5 @@ for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
 # plt.plot(allLoss)
 
 # %%
-reportName = f'{experiment}LOCellFinal'
 torch.save(model.state_dict(), f'../../models/{experiment}LOCellFinal.pth')
 np.save(f'../../models/{reportName}.npy', np.array(allLoss))
