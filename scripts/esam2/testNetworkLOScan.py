@@ -107,7 +107,7 @@ model.load_state_dict(torch.load(f'../../models/esam2LOScanDenoisedFinal.pth', m
 probs = []
 allLabels = []
 scores = []
-for i, batch in enumerate(tqdm(train_loader, desc=f"spectra", position=0, leave=True)):
+for i, batch in enumerate(tqdm(test_loader, desc=f"spectra", position=0, leave=True)):
 
     spectra, labels = tuple(t.to(device) for t in batch)
     # spectra = spectra.to(device)
@@ -136,5 +136,6 @@ plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title(f'AUC = {roc_auc:0.3f}')
-# %%
-x = np.load('../../models/esam2NonDenoisedLOCellFinalLOCellFinal.npy', allow_pickle=True)
+plt.show() 
+
+np.save(f'../../results/{experiment}leaveOutScanROC.npy', [fpr, tpr, roc_auc])

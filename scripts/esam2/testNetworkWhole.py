@@ -138,4 +138,5 @@ plt.grid()
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title(f'AUC = {roc_auc:0.3f}')
-# %%
+
+np.save(f'../../results/{experiment}testWholeROC.npy', [fpr, tpr, roc_auc])
