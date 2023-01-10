@@ -10,7 +10,7 @@ from resnet1d import ResNet1D, MyDataset
 
 import torch
 from torch.utils.data import DataLoader
-# %%
+# %% Partitioning data
 def shuffleLists(l, seed=1234):
     random.seed(seed)
     l = list(zip(*l))
@@ -56,3 +56,5 @@ def makeDataset(X_train, y_train, X_test, y_test, batch_size=32):
     test_loader = DataLoader(test_dataset, batch_size=batch_size, drop_last=False)    
 
     return train_loader, test_loader
+
+# %%

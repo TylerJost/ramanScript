@@ -1,7 +1,7 @@
 # %%
 import sys
-sys.path.append('../../')
-from ramanScript.ramanScript import ramanSpectra, getRamanData
+sys.path.append('../../../ramanScript')
+from ramanScript import ramanSpectra, getRamanData
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +11,9 @@ import pandas as pd
 from skimage.measure import label
 from skimage.color import label2rgb
 # %% Load data
-scans, spectraAxis = getRamanData('esam2')
+experiment = 'esam2'
+ramanData = np.load(f'../../../data/{experiment}/{experiment}.npy', allow_pickle=True)
+scans = [scan for scan in ramanData if scan.cellSpectra.size>0]
 # %% Make labeled image
 scan = scans[12]
 
@@ -84,7 +86,7 @@ plt.title('esam2\nRaman Signal', size=fontSize)
 lgnd = plt.legend(loc='upper right')
 for handle in lgnd.legendHandles:
     handle.set_sizes([50.0])
-plt.savefig('../../figures/UMAP/esam2UMAPPheno.png', dpi=300)
+plt.savefig('../../../figures/UMAP/esam2UMAPPheno.png', dpi=300)
 plt.show()
 
 # %%
@@ -101,13 +103,16 @@ for key, group in grouped:
     plt.scatter(group[0], group[1], label=key, color=colors[key], s=2.5, alpha=0.5)
 for spine in ['top', 'right']:
     ax.spines[spine].set_visible(False)
-plt.xlim(-2,20)
+# plt.xlim(-2,20)
+# plt.axis('off')
 plt.xlabel('UMAP 1', size=fontSize)
 plt.ylabel('UMAP 2', size=fontSize)
 plt.title('UMAP by Scan', size=fontSize)
+plt.xticks([])
+plt.yticks([])
 lgnd = plt.legend(loc='upper right')
 for handle in lgnd.legendHandles:
     handle.set_sizes([50.0])
-plt.savefig('../../figures/UMAP/esam2UMAPScan.png', dpi=300)
+plt.savefig('../../../figures/UMAP/esam2UMAPScan.png', dpi=300)
 plt.show()
 # %%
