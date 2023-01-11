@@ -53,6 +53,11 @@ for scan in trainScans:
 X_train = np.concatenate(X_train)
 y_train = np.concatenate(y_train)
 
+# Shuffle again
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+
 for scan in testScans:
     cellIdx = np.where(scan.cellSpectra>0)[0]
     X_test.append(scan.spectra[cellIdx,:])
