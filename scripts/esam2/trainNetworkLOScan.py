@@ -132,9 +132,29 @@ for epoch in tqdm(range(num_epochs), desc=f"epoch", leave=False):
         torch.save(model.state_dict(), f'../../models/{reportName}.pth')
         np.save(f'../../models/{reportName}.npy', np.array(allLoss))
 
-# %%
-# plt.plot(allLoss)
+# %% Add in message for testing
+probs = []
+allLabels = []
+scores = []
+for i, batch in enumerate(tqdm(test_loader, desc=f"spectra", position=0, leave=True)):
 
+    spectra, labels = tuple(t.to(device) for t in batch)
+    # spectra = spectra.to(device)
+    # labels = labels.to(device)
+
+    outputs = model(spectra)
+    probs.append(outputs.cpu().data.numpy())
+    allLabels.append(labels.cpu().data.numpy())
+    scores.append(F.softmax(outputs, dim=1).cpu().data.numpy())
+    
+probs = np.concatenate(probs)
+allLabels = np.concatenate(allLabels)
+scores = np.concatenate(scores)
+# TODO: Fix switched labels(?)
+allLabels = ~allLabels+2
+assert set(allLabels) == {0,1}
+pred = np.argmax(probs, axis=1)
+print(np.unique(pred, return_counts=True))
 # %%
 torch.save(model.state_dict(), f'../../models/{reportName}.pth')
 np.save(f'../../models/{reportName}.npy', np.array(allLoss))
