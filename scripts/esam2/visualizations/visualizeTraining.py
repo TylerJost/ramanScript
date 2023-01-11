@@ -198,6 +198,11 @@ for scan in trainScans:
 X_train = np.concatenate(X_train)
 y_train = np.concatenate(y_train)
 
+# Try shuffling all the data
+X_train, y_train = shuffleLists([X_train, y_train])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+
 for scan in testScans:
     cellIdx = np.where(scan.cellSpectra>0)[0]
     X_test.append(scan.spectra[cellIdx,:])
@@ -209,3 +214,4 @@ y_test = np.concatenate(y_test)
 reducer = umap.UMAP()
 embedding = reducer.fit_transform(spectra)
 plotUMAP(embedding, labels, title = 'Leave out Scan UMAP', fileName = '')
+# %%
